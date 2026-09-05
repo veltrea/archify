@@ -54,9 +54,12 @@ function authoredExample(type, locale) {
   let authoredIndex = 0;
   const nextAuthoredText = () => {
     authoredIndex += 1;
+    const suffix = String(authoredIndex).padStart(2, '0');
     const value = locale === 'zh-CN'
-      ? `文案${String(authoredIndex).padStart(2, '0')}`
-      : `Copy${String(authoredIndex).padStart(2, '0')}`;
+      ? `文案${suffix}`
+      : locale === 'ja'
+        ? `原稿${suffix}`
+        : `Copy${suffix}`;
     authored.push(value);
     return value;
   };
@@ -134,7 +137,7 @@ async function loadArtifact(browser, artifactPath) {
 }
 
 test('zh-CN localizes renderer-owned output across all five modes without translating authored content', () => {
-  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN']);
+  assert.deepEqual(SUPPORTED_LOCALES, ['en', 'zh-CN', 'ja']);
   for (const type of Object.keys(EXAMPLES)) {
     const document = example(type);
     const authoredTitle = document.meta.title;
@@ -156,11 +159,62 @@ test('zh-CN localizes renderer-owned output across all five modes without transl
   }
 });
 
-test('explicit en and zh-CN preserve complete authored field inventories across all five modes', () => {
+test('ja localizes renderer-owned output across all five modes without translating authored content', () => {
+  for (const type of Object.keys(EXAMPLES)) {
+    const document = example(type);
+    const authoredTitle = document.meta.title;
+    document.meta.locale = 'ja';
+    delete document.meta.subtitle;
+
+    const result = run(type, document);
+    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+    assert.match(result.html, /^<!DOCTYPE html>\n<html lang="ja"/);
+    assert.match(result.html, /<svg\b[^>]*\blang="ja"/);
+    assert.ok(result.html.includes(`<title>${authoredTitle}</title>`), `${type}: authored title changed`);
+    assert.ok(result.html.includes(`<h1>${authoredTitle}</h1>`), `${type}: authored heading changed`);
+    assert.match(result.html, /<text\b[^>]*>\u51e1\u4f8b<\/text>/);
+    assert.match(result.html, /aria-label="[^"]*\u306b\u6ce8\u76ee\u3059\u308b/);
+    assert.match(result.html, new RegExp('<desc id="archify-diagram-description">Archify \u304c\u751f\u6210\u3057\u305f'));
+    assert.match(result.html, /"locale":"ja"/);
+    assert.match(result.html, />\u56f3\u3092\u66f8\u304d\u51fa\u3059</);
+    assert.doesNotMatch(result.html, /\{\{i18n:/);
+  }
+});
+
+// Japanese and Simplified Chinese share Han characters but not their glyph
+// shapes. The CJK fallback order must follow the document language in both the
+// live page and the serialized SVG used for image export; otherwise Japanese
+// kanji render with Chinese shapes (and the reverse).
+test('CJK font fallback order follows the document language', () => {
+  const jpFirst = /--cjk-font:\s*'Hiragino Sans'/;
+  const scFirst = /html\[lang="zh-CN"\]\s*\{\s*--cjk-font:\s*'Noto Sans Mono CJK SC'/;
+  for (const type of Object.keys(EXAMPLES)) {
+    const document = example(type);
+    document.meta.locale = 'ja';
+    const result = run(type, document);
+    assert.equal(result.status, 0, `${type}: ${result.stderr || result.stdout}`);
+    assert.match(result.html, jpFirst, `${type}: Japanese CJK fallback is missing`);
+    assert.match(result.html, scFirst, `${type}: Chinese CJK fallback override is missing`);
+    assert.match(
+      result.html,
+      /function archifyFontStack\(\)/,
+      `${type}: exported SVG does not resolve its font stack from the document language`,
+    );
+    assert.doesNotMatch(
+      result.html,
+      /font-family:\s*'JetBrains Mono'[^;]*'PingFang SC'/,
+      `${type}: a hard-coded Simplified-Chinese-first stack is still present`,
+    );
+  }
+});
+
+test('explicit en, zh-CN, and ja preserve complete authored field inventories across all five modes', () => {
   for (const type of Object.keys(EXAMPLES)) {
     const english = authoredExample(type, 'en');
     const chinese = authoredExample(type, 'zh-CN');
+    const japanese = authoredExample(type, 'ja');
     assert.equal(english.authored.length, chinese.authored.length, `${type}: authored shapes differ`);
+    assert.equal(english.authored.length, japanese.authored.length, `${type}: authored shapes differ`);
     assert.ok(english.authored.length >= 10, `${type}: authored inventory is unexpectedly small`);
     if (type === 'dataflow') {
       assert.ok(
@@ -175,7 +229,7 @@ test('explicit en and zh-CN preserve complete authored field inventories across 
       );
     }
 
-    for (const candidate of [english, chinese]) {
+    for (const candidate of [english, chinese, japanese]) {
       const locale = candidate.document.meta.locale;
       const result = run(type, candidate.document);
       assert.equal(result.status, 0, `${type}/${locale}: ${result.stderr || result.stdout}`);
@@ -188,6 +242,9 @@ test('explicit en and zh-CN preserve complete authored field inventories across 
       if (locale === 'zh-CN') {
         assert.ok(result.html.includes(`<title>${candidate.document.meta.title}</title>`), type);
         assert.match(result.html, />导出图表</);
+      } else if (locale === 'ja') {
+        assert.ok(result.html.includes(`<title>${candidate.document.meta.title}</title>`), type);
+        assert.match(result.html, />図を書き出す</);
       } else {
         assert.ok(result.html.includes(`<title>${candidate.document.meta.title} Diagram</title>`), type);
         assert.match(result.html, />Export diagram</);

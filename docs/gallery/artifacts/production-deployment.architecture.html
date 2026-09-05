@@ -350,8 +350,17 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* CJK fallback order follows the document language so that Japanese
+       kanji do not render with Simplified-Chinese glyph shapes, and
+       Chinese text does not render with Japanese ones. */
+    :root { --cjk-font: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans Mono CJK JP', 'Noto Sans JP', 'Yu Gothic', 'YuGothic', 'Meiryo', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei'; }
+    html[lang="zh-CN"] { --cjk-font: 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans Mono CJK JP', 'Noto Sans JP', 'Yu Gothic', 'YuGothic', 'Meiryo'; }
+
+    :root { --cjk-serif-font: 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'Noto Serif JP', 'Noto Serif CJK JP', 'Songti SC', STSong; }
+    html[lang="zh-CN"] { --cjk-serif-font: 'Songti SC', STSong, 'Hiragino Mincho ProN', 'Yu Mincho', 'YuMincho', 'Noto Serif JP', 'Noto Serif CJK JP'; }
+
     body {
-      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace;
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', var(--cjk-font), monospace;
       background: var(--bg);
       min-height: 100vh;
       padding: 2rem;
@@ -696,7 +705,7 @@
 
     html[data-preset="editorial"] h1,
     html[data-preset="editorial"] .card h3 {
-      font-family: Georgia, 'Times New Roman', 'Songti SC', STSong, serif;
+      font-family: Georgia, 'Times New Roman', var(--cjk-serif-font), serif;
       letter-spacing: -0.02em;
     }
     html[data-preset="editorial"] h1 { font-size: 1.72rem; font-weight: 600; }
@@ -716,7 +725,7 @@
       padding: 0.32rem 0 0.24rem;
       border-bottom: 2px solid var(--arrow-emphasis);
       color: var(--arrow-emphasis);
-      font-family: Georgia, 'Times New Roman', serif;
+      font-family: Georgia, 'Times New Roman', var(--cjk-serif-font), serif;
       font-size: 0.625rem;
       font-style: italic;
       font-weight: 600;
@@ -791,7 +800,7 @@
       background: var(--panel);
       color: var(--arrow-emphasis);
       content: attr(data-preset-badge-editorial-plate);
-      font-family: Georgia, 'Times New Roman', serif;
+      font-family: Georgia, 'Times New Roman', var(--cjk-serif-font), serif;
       font-size: 0.52rem;
       font-style: italic;
       font-weight: 600;
@@ -6249,6 +6258,20 @@
         // falls through cleanly to the monospace stack otherwise. The usual
         // Google-Fonts <link> in the host document is unreachable from the
         // serialized SVG, so url()-sourced faces would just hang.
+        // The serialized SVG carries no CSS variables from the host page,
+        // so the CJK fallback order is resolved here from the document
+        // language. Japanese first for every non-Chinese document, Chinese
+        // first for lang="zh-CN"; otherwise kanji pick up the wrong glyph
+        // shapes in the exported image.
+        function archifyFontStack() {
+          var base = "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono'";
+          var jp = "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans Mono CJK JP', 'Noto Sans JP', 'Yu Gothic', 'YuGothic', 'Meiryo'";
+          var sc = "'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei'";
+          var lang = (document.documentElement.getAttribute('lang') || '').toLowerCase();
+          var cjk = lang.indexOf('zh') === 0 ? sc + ', ' + jp : jp + ', ' + sc;
+          return base + ', ' + cjk + ', monospace';
+        }
+
         var fontFallback = [400, 500, 600, 700].map(function (w) {
           return "@font-face { font-family: 'JetBrains Mono'; font-weight: " + w +
                  "; src: local('JetBrains Mono'), local('JetBrainsMono-Regular'); }";
@@ -6269,7 +6292,7 @@
 
           style.textContent =
             fontFallback + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
+            "svg { font-family: " + archifyFontStack() + "; }\n" +
             hostStyle + "\n" +
             ":root, svg { " + darkVars + " }\n" +
             "@media (prefers-color-scheme: light) { :root, svg { " + lightVars + " } }\n" +
@@ -6297,7 +6320,7 @@
           // Keep this order.
           style.textContent =
             fontFallback + "\n" +
-            "svg { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, 'DejaVu Sans Mono', 'Liberation Mono', 'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', monospace; }\n" +
+            "svg { font-family: " + archifyFontStack() + "; }\n" +
             hostStyle + "\n" +
             ":root, svg { " + vars + " }\n";
 

@@ -5,8 +5,9 @@ const RAW_RECIPES = [
     start: {
       en: { descriptionPrompt: 'Use Archify to turn this plain-language system description into a high-level architecture diagram: [describe the users, core components, primary path, external dependencies, and boundaries]. No repository is required. Ask only for missing facts that would materially change the diagram, mark any remaining unknowns instead of inventing them, and keep one obvious primary path across 8–12 core components.' },
       zh: { descriptionPrompt: '用 Archify 把下面这段自然语言系统描述画成高层架构图：[在这里描述用户、核心组件、主要路径、外部依赖和边界]。不需要代码库。只追问会实质影响图的缺失信息，其余不确定内容要标明而不是编造；保留 8–12 个核心组件和一条一眼可见的主路径。' },
+      ja: { descriptionPrompt: 'Archify を使って、次の日本語のしくみの説明を、全体の構成図にしてください: [利用者・中心となる部品・主な経路・外部への依存・境界を書いてください]。リポジトリは要りません。図が大きく変わる欠けた事実だけを聞き、それ以外の分からない点は作らずにそのまま「不明」と示し、中心となる部品 8〜12 個の中に、ひと目で分かる主経路を 1 本だけ通してください。' },
     },
-    signals: [['system overview', 12], ['architecture', 10], ['components', 6], ['services', 4], ['repository', 5], ['trust boundary', 8], ['架构', 10], ['系统总览', 12], ['组件', 6], ['服务', 4], ['仓库', 5], ['信任边界', 8]],
+    signals: [['system overview', 12], ['architecture', 10], ['components', 6], ['services', 4], ['repository', 5], ['trust boundary', 8], ['架构', 10], ['系统总览', 12], ['组件', 6], ['服务', 4], ['仓库', 5], ['信任边界', 8], ['しくみの全体', 12], ['全体像', 11], ['構成図', 10], ['アーキテクチャ', 10], ['部品', 6], ['サービス構成', 6], ['リポジトリ', 5], ['信頼の境界', 8]],
     en: {
       title: 'System overview', question: 'What exists, who owns it, and how is it connected?',
       summary: 'A bounded map of core components, external dependencies, primary paths, and trust boundaries.',
@@ -23,11 +24,19 @@ const RAW_RECIPES = [
       include: ['8–12 个核心组件', '一条主路径', '外部依赖', '归属或信任边界'],
       prompt: '分析这个仓库，然后用 Archify 生成高层系统架构图。展示 8–12 个核心运行时组件、一条主要请求或数据路径、外部依赖、归属或信任边界；支持性细节放进卡片，不要继续堆连线。',
     },
+    ja: {
+      title: 'しくみの全体像', question: '何があり、誰が持ち、どうつながっているのか。',
+      summary: '中心となる部品・外部への依存・主な経路・信頼の境界を、範囲を区切って 1 枚にまとめた図です。',
+      useWhen: '新しく加わった人への説明、設計のレビュー、リポジトリの見取り図、サービス全体の説明に向きます。',
+      avoidWhen: '呼び出しの正確な順番、状態の移り変わり、1 行ごとのデータの出どころを見せたいときには向きません。',
+      include: ['中心となる部品 8〜12 個', '主経路 1 本', '外部への依存', '信頼の境界'],
+      prompt: 'このリポジトリを調べ、Archify で全体の構成図を作ってください。動いている中心の部品を 8〜12 個、主な要求またはデータの経路を 1 本、外部への依存、担当または信頼の境界を示してください。補足はカードに入れ、線を増やさないでください。',
+    },
   },
   {
     id: 'deployment-ownership', type: 'architecture', proof: 'deployment-ownership',
     presentation: { preset: 'blueprint', motion: 'trace', views: 'recommended' },
-    signals: [['deployment topology', 14], ['region', 7], ['vpc', 9], ['cluster', 6], ['availability zone', 8], ['ownership', 7], ['cloud deployment', 12], ['部署拓扑', 14], ['区域', 6], ['集群', 6], ['可用区', 8], ['资源归属', 9], ['跨区', 8]],
+    signals: [['deployment topology', 14], ['region', 7], ['vpc', 9], ['cluster', 6], ['availability zone', 8], ['ownership', 7], ['cloud deployment', 12], ['部署拓扑', 14], ['区域', 6], ['集群', 6], ['可用区', 8], ['资源归属', 9], ['跨区', 8], ['配置図', 14], ['デプロイ構成', 14], ['リージョン', 7], ['ネットワーク構成', 7], ['クラスタ', 6], ['アベイラビリティゾーン', 8], ['担当', 6], ['クラウドの配置', 12]],
     en: {
       title: 'Deployment ownership', question: 'Where does each workload run, and what crosses a boundary?',
       summary: 'A deployment-focused map of regions, networks, clusters, workloads, stores, and cross-boundary mechanisms.',
@@ -44,6 +53,14 @@ const RAW_RECIPES = [
       include: ['区域与网络', '工作负载归属', '有状态服务', '明确的跨边界机制'],
       prompt: '用 Archify 绘制生产部署拓扑。按区域、网络、集群和负责人分组，展示工作负载与有状态服务，并标注每一种跨边界机制。不要编造部署事实，不确定的区域要明确标出。如果用户需要失败即阻断的部署评审，先征得确认，再把 meta.engineering_profile 设为 deployment-ownership；否则不要启用工程画像。',
     },
+    ja: {
+      title: '配置と担当', question: 'どの処理がどこで動き、どのつながりが境界をまたぐのか。',
+      summary: 'リージョン・ネットワーク・クラスタ・処理・保管先・境界をまたぐしくみを軸にまとめた配置の図です。',
+      useWhen: 'クラウドのレビュー、本番稼働の可否の確認、複数リージョンの計画、基盤の引き継ぎに向きます。',
+      avoidWhen: '配置の事実が分からないとき、または本当の問いが置き場所ではなくアプリの動きであるときには向きません。',
+      include: ['リージョンとネットワーク', '処理の担当', '状態を持つサービス', '境界をまたぐしくみの名前'],
+      prompt: 'Archify で本番の配置図を描いてください。リージョン・ネットワーク・クラスタ・担当ごとにまとめ、動いている処理と状態を持つサービスを示し、境界をまたぐしくみには必ず名前を付けてください。配置の事実を作らず、分からない範囲は「不明」と明記してください。失敗したらそこで止める配置レビューを求められた場合は、meta.engineering_profile を deployment-ownership にする前に確認してください。そうでなければ engineering_profile は設定しないでください。',
+    },
   },
   {
     id: 'agent-tool-call', type: 'workflow', proof: 'agent-tool-call',
@@ -51,8 +68,9 @@ const RAW_RECIPES = [
     start: {
       en: { descriptionPrompt: 'Use Archify workflow mode to turn this description into a diagram: [paste the actors, main steps, decisions, approvals, and exception paths]. Use lanes for distinct owners, keep one unmistakable happy path, and mark missing ownership or unresolved branches instead of inventing them.' },
       zh: { descriptionPrompt: '用 Archify 工作流模式把下面的描述画成图：[粘贴参与者、主要步骤、决策、审批和异常路径]。不同负责方使用独立泳道，保留一条明确的成功主路径，缺失的负责人或未定分支要标明而不是编造。' },
+      ja: { descriptionPrompt: 'Archify の業務の流れモードを使って、次の説明を図にしてください: [登場する人や部品・主な手順・判断・承認・例外の経路を貼ってください]。担当ごとに区切り（レーン）を分け、成功する主経路を 1 本だけはっきり残し、担当が決まっていない部分や未確定の分岐は、作らずに「未定」と示してください。' },
     },
-    signals: [['agent tool call', 16], ['tool call', 12], ['approval gate', 10], ['human in the loop', 9], ['mcp', 7], ['planner', 6], ['agent loop', 10], ['智能体工具调用', 16], ['工具调用', 12], ['审批门', 10], ['人在回路', 9], ['规划器', 6], ['智能体循环', 10]],
+    signals: [['agent tool call', 16], ['tool call', 12], ['approval gate', 10], ['human in the loop', 9], ['mcp', 7], ['planner', 6], ['agent loop', 10], ['智能体工具调用', 16], ['工具调用', 12], ['审批门', 10], ['人在回路', 9], ['规划器', 6], ['智能体循环', 10], ['エージェントのツール呼び出し', 16], ['ツール呼び出し', 12], ['承認の関門', 10], ['人の確認を挟む', 9], ['エージェントの繰り返し', 10], ['計画を立てる部分', 6]],
     en: {
       title: 'Agent tool-call loop', question: 'How does an agent plan, get permission, act, recover, and report?',
       summary: 'A lane-based agent loop with policy gates, tool execution, exception recovery, evidence, and final response.',
@@ -69,11 +87,19 @@ const RAW_RECIPES = [
       include: ['请求与规划', '策略或审批门', '工具执行', '异常与证据路径'],
       prompt: '用 Archify 工作流模式解释这段智能体工具调用。把用户界面、Agent Runtime、策略边界、异常处理、工具执行和可观测性分成泳道；突出成功主路径，并明确展示审批、重试、阻塞和证据路径。',
     },
+    ja: {
+      title: 'エージェントのツール呼び出し', question: 'エージェントは、どう計画し、許可を得て、実行し、立て直し、報告するのか。',
+      summary: '方針の関門・ツールの実行・例外からの立て直し・根拠・最終の応答を、担当ごとの区切りで並べた図です。',
+      useWhen: 'エージェントの動く仕組み、MCP やツールの組み立て、承認、再試行、記録の説明に向きます。',
+      avoidWhen: '静止したエージェントの部品だけ、または API の正確な時間関係だけを見せたいときには向きません。',
+      include: ['要求と計画', '方針または承認の関門', 'ツールの実行', '例外と根拠の経路'],
+      prompt: 'Archify の業務の流れモードで、このエージェントのツール呼び出しを説明してください。利用者の画面、エージェントの実行、方針の境界、例外の処理、ツールの実行、記録を、それぞれ別の区切りに分けてください。成功する経路を主にし、承認・再試行・拒否・根拠の経路をはっきり示してください。',
+    },
   },
   {
     id: 'delivery-workflow', type: 'workflow', proof: 'delivery-workflow',
     presentation: { preset: 'classic', motion: 'trace', views: 'optional' },
-    signals: [['ci/cd', 14], ['release workflow', 14], ['deployment pipeline', 11], ['pull request', 7], ['staging', 7], ['rollback', 8], ['发布流程', 14], ['流水线', 9], ['上线', 7], ['预发', 7], ['回滚', 8], ['审批发布', 10]],
+    signals: [['ci/cd', 14], ['release workflow', 14], ['deployment pipeline', 11], ['pull request', 7], ['staging', 7], ['rollback', 8], ['发布流程', 14], ['流水线', 9], ['上线', 7], ['预发', 7], ['回滚', 8], ['审批发布', 10], ['リリースの流れ', 14], ['デプロイの流れ', 13], ['CI/CD', 12], ['ビルドから本番', 10], ['承認', 7], ['切り戻し', 9], ['ロールバック', 9]],
     en: {
       title: 'Delivery workflow', question: 'How does a change move safely from commit to production?',
       summary: 'A delivery flow with build, checks, environments, approvals, smoke tests, rollback, and ownership lanes.',
@@ -90,11 +116,19 @@ const RAW_RECIPES = [
       include: ['触发与构建', '阻断检查', '审批与环境', '回滚与验证'],
       prompt: '用 Archify 工作流模式绘制从代码提交到生产发布的流程。拆分开发者、CI、审批、环境和异常泳道；标出阻断检查、冒烟测试、负责人和回滚路径，并保留一条一眼可见的成功主路径。',
     },
+    ja: {
+      title: 'リリースまでの流れ', question: '変更は、どうやって安全に本番へ届くのか。',
+      summary: 'ビルド・検査・環境・承認・簡易確認・切り戻し・担当の区切りをまとめたリリースの流れです。',
+      useWhen: 'CI/CD の設計、リリースのレビュー、配布の決まりごと、開発者への引き継ぎに向きます。',
+      avoidWhen: '基盤がどこで動くかを問うとき、または配布物が取りうる状態を問うときには向きません。',
+      include: ['きっかけとビルド', '止める検査', '承認と環境', '切り戻しと確認'],
+      prompt: 'Archify の業務の流れモードで、コミットから本番までの流れを描いてください。開発者・CI・承認・環境・例外の区切りを分け、止める検査・簡易確認・担当・切り戻しの経路を示してください。成功する主経路は 1 本だけ、はっきり分かる形にしてください。',
+    },
   },
   {
     id: 'incident-runbook', type: 'workflow', proof: 'incident-runbook',
     presentation: { preset: 'signal-flow', motion: 'trace', views: 'recommended' },
-    signals: [['incident response', 15], ['runbook', 12], ['outage', 9], ['triage', 8], ['mitigation', 8], ['escalation', 7], ['事故处置', 15], ['故障', 9], ['应急预案', 12], ['排障', 9], ['缓解', 7], ['升级响应', 8]],
+    signals: [['incident response', 15], ['runbook', 12], ['outage', 9], ['triage', 8], ['mitigation', 8], ['escalation', 7], ['事故处置', 15], ['故障', 9], ['应急预案', 12], ['排障', 9], ['缓解', 7], ['升级响应', 8], ['障害対応', 14], ['インシデント', 13], ['手順書', 8], ['当番', 7], ['切り分け', 8], ['エスカレーション', 9], ['復旧の確認', 8]],
     en: {
       title: 'Incident runbook', question: 'How do responders detect, triage, mitigate, verify, and escalate?',
       summary: 'An operational workflow that separates signals, responders, mitigation, communications, and recovery proof.',
@@ -111,6 +145,14 @@ const RAW_RECIPES = [
       include: ['发现信号', '分诊负责人', '缓解与回滚', '恢复验证与沟通'],
       prompt: '用 Archify 工作流模式把事故处置预案画成响应者泳道。展示发现、分诊、缓解、升级、沟通、回滚和恢复验证；把决策门与操作分开，并让缺失的负责人清晰可见。',
     },
+    ja: {
+      title: '障害対応の手順', question: '対応する人は、どう気づき、切り分け、抑え、確かめ、上げるのか。',
+      summary: '異常の知らせ・対応する人・被害の抑え込み・連絡・復旧の裏づけを分けて並べた運用の流れです。',
+      useWhen: '障害対応の手順書、当番の引き継ぎ、信頼性のレビュー、机上訓練に向きます。',
+      avoidWhen: '対応の行動ではなく、今の数値や、事後の構成図を見せたいときには向きません。',
+      include: ['気づくきっかけ', '切り分けの担当', '抑え込みと切り戻し', '確認と連絡'],
+      prompt: 'Archify の業務の流れモードで、この障害対応の手順を、担当ごとの区切りに直してください。検知・切り分け・抑え込み・上位への連絡・関係者への連絡・切り戻し・復旧の確認を示してください。判断の関門と実際の作業を分け、担当が決まっていない箇所は見えるようにしてください。',
+    },
   },
   {
     id: 'api-request', type: 'sequence', proof: 'cache-miss',
@@ -118,8 +160,9 @@ const RAW_RECIPES = [
     start: {
       en: { descriptionPrompt: 'Use Archify sequence mode to draw this interaction: [paste the participants, calls, returns, fallback, and asynchronous side effects]. Keep message order unambiguous, labels short, and unknown behavior explicit. No repository is required.' },
       zh: { descriptionPrompt: '用 Archify 时序模式绘制下面的交互：[粘贴参与者、调用、返回、回退和异步副作用]。确保消息顺序无歧义、标签简短，并明确标注未知行为。不需要代码库。' },
+      ja: { descriptionPrompt: 'Archify のシーケンスモードで、次のやり取りを描いてください: [参加者・呼び出し・戻り・代替の経路・非同期の副作用を貼ってください]。やり取りの順番をあいまいにせず、名前は短くし、分からない動きは「不明」と明記してください。リポジトリは要りません。' },
     },
-    signals: [['api request', 14], ['request response', 12], ['call chain', 11], ['cache miss', 13], ['jwt', 8], ['who calls whom', 12], ['api 请求', 14], ['请求响应', 12], ['调用链', 11], ['缓存未命中', 13], ['谁调用谁', 12], ['鉴权链路', 9]],
+    signals: [['api request', 14], ['request response', 12], ['call chain', 11], ['cache miss', 13], ['jwt', 8], ['who calls whom', 12], ['api 请求', 14], ['请求响应', 12], ['调用链', 11], ['缓存未命中', 13], ['谁调用谁', 12], ['鉴权链路', 9], ['API の呼び出し', 14], ['シーケンス図', 13], ['呼び出しの順番', 10], ['認証の流れ', 8], ['キャッシュ', 7], ['応答の遅さ', 7]],
     en: {
       title: 'API request chain', question: 'Who calls whom, in what order, and what returns?',
       summary: 'A time-ordered request path with authentication, cache fallback, persistence, return traffic, and async trace.',
@@ -136,11 +179,19 @@ const RAW_RECIPES = [
       include: ['调用方与被调用方', '请求与返回消息', '回退或错误路径', '异步副作用'],
       prompt: '用 Archify 时序模式展示从调用方到最终响应的完整请求。包含鉴权、缓存命中或未命中、持久化回退、返回消息，以及异步 Trace 或事件上报；消息标签保持简短，顺序必须明确。',
     },
+    ja: {
+      title: 'API の呼び出しの連なり', question: '誰が誰を、どの順で呼び、何が返るのか。',
+      summary: '認証・キャッシュの代替・保存・戻りのやり取り・非同期の追跡を、時間の順に並べた図です。',
+      useWhen: 'API の説明、応答が遅い原因調べ、認証のレビュー、キャッシュの代替経路の説明に向きます。',
+      avoidWhen: '順番が重要でなく、変わらないサービスの構成だけを見せたいときには向きません。',
+      include: ['呼ぶ側と呼ばれる側', '要求と戻りのやり取り', '代替または失敗の経路', '非同期の副作用'],
+      prompt: 'Archify のシーケンスモードで、この要求を呼び出し元から最終の応答まで示してください。認証、キャッシュに当たった場合と外れた場合、保存への代替、戻りのやり取り、非同期の追跡や通知を入れてください。やり取りの名前は短くし、順番をあいまいにしないでください。',
+    },
   },
   {
     id: 'async-roundtrip', type: 'sequence', proof: 'async-roundtrip',
     presentation: { preset: 'signal-flow', motion: 'trace', views: 'recommended' },
-    signals: [['async roundtrip', 14], ['webhook', 10], ['callback', 10], ['acknowledgement', 8], ['timeout', 7], ['retry message', 8], ['异步回调', 14], ['回调', 10], ['确认消息', 8], ['超时', 7], ['消息重试', 9], ['webhook', 10]],
+    signals: [['async roundtrip', 14], ['webhook', 10], ['callback', 10], ['acknowledgement', 8], ['timeout', 7], ['retry message', 8], ['异步回调', 14], ['回调', 10], ['确认消息', 8], ['超时', 7], ['消息重试', 9], ['webhook', 10], ['非同期', 12], ['Webhook', 12], ['待ち行列', 10], ['キュー', 10], ['折り返しの通知', 10], ['コールバック', 10], ['再試行', 8], ['時間切れ', 8]],
     en: {
       title: 'Async roundtrip', question: 'What happens after the initial request returns?',
       summary: 'A sequence view of enqueue, acknowledgement, background work, callbacks, retries, timeout, and final consistency.',
@@ -157,11 +208,19 @@ const RAW_RECIPES = [
       include: ['初始确认', '队列或调度器', '后台处理', '回调、重试与超时'],
       prompt: '用 Archify 时序模式解释这段异步往返链路。展示初始确认、入队或调度、后台处理、回调或轮询、重试与超时，以及调用方何时能观察到最终一致结果。',
     },
+    ja: {
+      title: '非同期の往復', question: '最初の応答が返ったあと、何が起きるのか。',
+      summary: '待ち行列への投入・受領の返事・裏側の処理・折り返しの通知・再試行・時間切れ・最終的な一致を並べた図です。',
+      useWhen: 'Webhook、バッチ、待ち行列、決済の折り返し、遅れて一致する仕組み、非同期の取り決めに向きます。',
+      avoidWhen: '時間の順よりも、話題の構成や受け取り側の担当を問うときには向きません。',
+      include: ['最初の受領の返事', '待ち行列または実行の予約', '裏側の処理', '折り返し・再試行・時間切れ'],
+      prompt: 'Archify のシーケンスモードで、この非同期の往復を説明してください。最初の受領の返事、待ち行列への投入または実行の予約、裏側の処理、折り返しの通知または問い合わせ、再試行と時間切れの動き、そして呼び出し元が最終的な一致を確かめられる時点を示してください。',
+    },
   },
   {
     id: 'data-lineage', type: 'dataflow', proof: 'product-analytics',
     presentation: { preset: 'classic', motion: 'trace', views: 'recommended' },
-    signals: [['data lineage', 15], ['etl', 12], ['warehouse', 9], ['pii', 11], ['governance', 9], ['analytics pipeline', 12], ['数据血缘', 15], ['数据管道', 11], ['数仓', 9], ['治理', 9], ['隐私数据', 10], ['用户同意', 9]],
+    signals: [['data lineage', 15], ['etl', 12], ['warehouse', 9], ['pii', 11], ['governance', 9], ['analytics pipeline', 12], ['数据血缘', 15], ['数据管道', 11], ['数仓', 9], ['治理', 9], ['隐私数据', 10], ['用户同意', 9], ['データの流れ', 12], ['データの出どころ', 12], ['ETL', 11], ['ELT', 11], ['個人情報', 9], ['データ基盤', 8], ['データウェアハウス', 8], ['変換', 6]],
     en: {
       title: 'Data lineage', question: 'Where does data come from, how does it change, and who consumes it?',
       summary: 'A governed path from sources through consent, transforms, sensitive stores, warehouse, and consumers.',
@@ -178,6 +237,14 @@ const RAW_RECIPES = [
       include: ['数据来源与资产', '转换阶段', '分类或同意边界', '存储与消费者'],
       prompt: '用 Archify 数据流模式梳理这段数据血缘。为每个数据资产和转换命名，展示用户同意或数据分类边界，区分流式与批处理路径，并标明存储和下游消费者；所有数据流都必须有标签。',
     },
+    ja: {
+      title: 'データの出どころと行き先', question: 'データはどこから来て、どう変わり、誰が使うのか。',
+      summary: '取得元から、同意・変換・取り扱いに注意が要る保管先・分析基盤・利用者までを、決まりに沿って並べた図です。',
+      useWhen: '分析基盤の設計、ETL/ELT のレビュー、個人情報の点検、倉庫の設計、機械学習の特徴量の追跡に向きます。',
+      avoidWhen: 'データそのものではなく、要求の時間関係や運用の担当を見せたいときには向きません。',
+      include: ['取得元とデータ', '変換の段階', '区分または同意', '保管先と利用者'],
+      prompt: 'Archify のデータの流れモードで、このデータの出どころと行き先を図にしてください。データと変換にはすべて名前を付け、同意や区分の境界を示し、絶えず流れる経路と一括で流れる経路を分け、保管先とその先の利用者を示してください。名前のない流れを作らないでください。',
+    },
   },
   {
     id: 'event-stream', type: 'dataflow', proof: 'event-stream',
@@ -185,8 +252,9 @@ const RAW_RECIPES = [
     start: {
       en: { descriptionPrompt: 'Use Archify dataflow mode to map this data journey: [paste the sources, data assets, transforms, stores, boundaries, and consumers]. Label every flow, distinguish streaming from batch where relevant, and mark unknown classifications or ownership instead of inventing them.' },
       zh: { descriptionPrompt: '用 Archify 数据流模式梳理下面的数据路径：[粘贴来源、数据资产、转换、存储、边界和消费者]。为每条数据流标注名称，在有意义时区分流式与批处理，未知的分类或归属要标明而不是编造。' },
+      ja: { descriptionPrompt: 'Archify のデータの流れモードで、次のデータの道すじを整理してください: [取得元・データ・変換・保管先・境界・利用者を貼ってください]。すべての流れに名前を付け、必要に応じて絶えず流れる経路と一括で流れる経路を分け、区分や担当が分からない箇所は、作らずに「不明」と示してください。' },
     },
-    signals: [['event stream', 15], ['kafka topology', 14], ['topic', 8], ['consumer group', 11], ['dead letter', 10], ['dlq', 10], ['事件流', 15], ['kafka 拓扑', 14], ['主题', 7], ['消费者组', 11], ['死信', 10], ['事件地铁图', 12]],
+    signals: [['event stream', 15], ['kafka topology', 14], ['topic', 8], ['consumer group', 11], ['dead letter', 10], ['dlq', 10], ['事件流', 15], ['kafka 拓扑', 14], ['主题', 7], ['消费者组', 11], ['死信', 10], ['事件地铁图', 12], ['イベントの流れ', 14], ['Kafka', 13], ['トピック', 9], ['受け取り組', 9], ['コンシューマグループ', 9], ['再処理', 8], ['デッドレター', 9], ['ストリーム処理', 11]],
     en: {
       title: 'Event-stream topology', question: 'Which events move through which topics, processors, groups, and failure paths?',
       summary: 'A stream map of producers, topics, ordered processors, consumer groups, state, replay, and DLQ.',
@@ -203,6 +271,14 @@ const RAW_RECIPES = [
       include: ['生产者与事件名', 'Topic 与顺序', '处理器与消费者组', '状态、重放与 DLQ'],
       prompt: '用 Archify 数据流模式绘制这段事件流拓扑。命名生产者、事件、Topic、有序处理器、消费者组、状态存储、重放路径和 DLQ；只有在证据充分时才标注归属和投递语义。',
     },
+    ja: {
+      title: 'イベントの流れの構成', question: 'どのイベントが、どの話題・処理・受け取り組・失敗の経路を通るのか。',
+      summary: '送り手・話題・順番を守る処理・受け取り組・状態・再処理・失敗の置き場をまとめた流れの図です。',
+      useWhen: 'Kafka などの基盤の設計、流れの処理のレビュー、担当、再処理、失敗の扱いに向きます。',
+      avoidWhen: '話題の名前・受け取り組・配送の約束が分からないときには向きません。普通の業務の流れを使ってください。',
+      include: ['送り手とイベント名', '話題と順番', '処理と受け取り組', '状態・再処理・失敗の置き場'],
+      prompt: 'Archify のデータの流れモードで、このイベントの流れの構成を描いてください。送り手・イベント・話題・順番を守る処理・受け取り組・状態の保管先・再処理の経路・失敗の置き場に名前を付けてください。担当と配送の約束は、裏づけがあるときだけ示してください。',
+    },
   },
   {
     id: 'object-lifecycle', type: 'lifecycle', proof: 'agent-run',
@@ -210,8 +286,9 @@ const RAW_RECIPES = [
     start: {
       en: { descriptionPrompt: 'Use Archify lifecycle mode to model this object: [paste its states, transition events, waits, retries, cancellation, and terminal outcomes]. Separate active, waiting, recoverable-failure, and terminal states, and never hide an ending. No repository is required.' },
       zh: { descriptionPrompt: '用 Archify 生命周期模式建模这个对象：[粘贴它的状态、转换事件、等待、重试、取消和终态]。分开执行、等待、可恢复失败和终态，不要隐藏任何结束方式。不需要代码库。' },
+      ja: { descriptionPrompt: 'Archify のライフサイクルモードで、この対象を図にしてください: [状態・移り変わるきっかけ・待ち・再試行・取り消し・終わりの結果を貼ってください]。動作中・待ち・立て直せる失敗・終わりの状態を分け、終わりを隠さないでください。リポジトリは要りません。' },
     },
-    signals: [['state machine', 15], ['object lifecycle', 14], ['status transition', 11], ['terminal state', 9], ['retry state', 8], ['状态机', 15], ['生命周期', 13], ['状态流转', 11], ['终态', 9], ['等待态', 8], ['重试状态', 8]],
+    signals: [['state machine', 15], ['object lifecycle', 14], ['status transition', 11], ['terminal state', 9], ['retry state', 8], ['状态机', 15], ['生命周期', 13], ['状态流转', 11], ['终态', 9], ['等待态', 8], ['重试状态', 8], ['ライフサイクル', 13], ['状態遷移', 13], ['ステートマシン', 12], ['状態の移り変わり', 12], ['取り消し', 7], ['終わりの状態', 8]],
     en: {
       title: 'Object lifecycle', question: 'Which states exist, what events move between them, and how does it end?',
       summary: 'A state model with active work, waits, retries, cancellation, failure, and explicit terminal outcomes.',
@@ -228,11 +305,19 @@ const RAW_RECIPES = [
       include: ['开始与执行态', '带事件的转换', '等待与重试态', '所有终态'],
       prompt: '用 Archify 生命周期模式建模这个对象。分开主进度、等待或中断状态和终态；用事件标注转换，并在真实存在时展示重试、取消、超时、成功和失败，不能隐藏任何结束方式。',
     },
+    ja: {
+      title: '対象のライフサイクル', question: 'どんな状態があり、何をきっかけに移り、どう終わるのか。',
+      summary: '動作中の作業・待ち・再試行・取り消し・失敗と、はっきりした終わりの結果をまとめた状態の図です。',
+      useWhen: '作業・注文・問い合わせ・契約・処理・エージェントの実行など、状態を持ち続ける対象に向きます。',
+      avoidWhen: '対象が状態を持たず、本当の問いが参加者どうしの時間の流れであるときには向きません。',
+      include: ['開始と動作中の状態', 'きっかけを書いた移り変わり', '待ちと再試行の状態', '終わりの結果すべて'],
+      prompt: 'Archify のライフサイクルモードで、この対象を図にしてください。主な進行、待ちや中断の状態、終わりの結果を分けてください。移り変わりにはきっかけの名前を付け、実際にあるものは再試行・取り消し・時間切れ・成功・失敗をすべて入れ、終わりを隠さないでください。',
+    },
   },
   {
     id: 'deployment-lifecycle', type: 'lifecycle', proof: 'deployment-lifecycle',
     presentation: { preset: 'signal-flow', motion: 'trace', views: 'recommended' },
-    signals: [['deployment lifecycle', 15], ['release state', 10], ['promotion state', 9], ['approval status', 8], ['rollback state', 10], ['部署生命周期', 15], ['发布状态', 10], ['晋级', 7], ['审批状态', 8], ['回滚状态', 10]],
+    signals: [['deployment lifecycle', 15], ['release state', 10], ['promotion state', 9], ['approval status', 8], ['rollback state', 10], ['部署生命周期', 15], ['发布状态', 10], ['晋级', 7], ['审批状态', 8], ['回滚状态', 10], ['リリースの状態', 13], ['デプロイの状態', 13], ['GitOps', 10], ['環境の引き上げ', 9], ['承認待ち', 8], ['切り戻し中', 8]],
     en: {
       title: 'Deployment lifecycle', question: 'What state is a release in, and what can happen next?',
       summary: 'A deployment state model covering queued, building, verifying, approval, promotion, rollback, and terminal outcomes.',
@@ -249,6 +334,14 @@ const RAW_RECIPES = [
       include: ['排队与执行态', '验证与审批', '晋级与回滚', '成功、失败与取消'],
       prompt: '用 Archify 生命周期模式建模部署对象。展示排队、构建、验证、等待审批、晋级、回滚以及所有终态，并标注允许每次状态转换的事件和守卫条件。',
     },
+    ja: {
+      title: 'リリースの状態の移り変わり', question: 'リリースは今どの状態にあり、次に何が起こりうるのか。',
+      summary: '順番待ち・ビルド中・確認中・承認待ち・展開・切り戻し・終わりの結果をまとめた配布物の状態の図です。',
+      useWhen: 'リリースを管理するしくみ、GitOps の同期、環境の引き上げ、配布状態の API に向きます。',
+      avoidWhen: '配布物の状態ではなく、人や CI が行う作業の順番を問うときには向きません。',
+      include: ['順番待ちと実行中の状態', '確認と承認', '引き上げと切り戻し', '成功・失敗・取り消し'],
+      prompt: 'Archify のライフサイクルモードで、配布物を図にしてください。順番待ち・ビルド中・確認中・承認待ち・引き上げ中・切り戻し中と、終わりの結果をすべて示してください。それぞれの移り変わりを許すきっかけと条件に名前を付けてください。',
+    },
   },
 ];
 
@@ -264,12 +357,29 @@ export const SCENARIO_RECIPES = Object.freeze(RAW_RECIPES.map((recipe) => Object
   zh: Object.freeze({ ...recipe.zh, include: Object.freeze(recipe.zh.include.slice()) }),
 })));
 
+// Kana is the only unambiguous signal for Japanese: Han ideographs alone are
+// shared with Chinese, so kana is tested first and Han-only input still
+// resolves to Chinese.
 export function detectGuideLanguage(value = '') {
-  return /[\u3400-\u9fff]/u.test(value) ? 'zh' : 'en';
+  const text = String(value || '');
+  if (/[\u3040-\u30ff]/u.test(text)) return 'ja';
+  return /[\u3400-\u9fff]/u.test(text) ? 'zh' : 'en';
 }
 
+const GUIDE_LANGS = ['en', 'zh', 'ja'];
+
+export function resolveGuideLanguage(lang) {
+  return GUIDE_LANGS.includes(lang) ? lang : 'en';
+}
+
+const REPOSITORY_PROMPT_WRAPPERS = {
+  zh: (prompt) => `先检查这个仓库里的相关证据，然后${prompt}不要编造代码无法支持的行为。`,
+  ja: (prompt) => `まずこのリポジトリの中の裏づけを調べ、そのうえで${prompt}コードで裏づけられない動きを作らないでください。`,
+  en: (prompt) => `Inspect this repository for evidence, then ${prompt.charAt(0).toLowerCase()}${prompt.slice(1)} Do not invent behavior that the code does not support.`,
+};
+
 export function startPromptsFor(recipe, lang = 'en') {
-  const language = lang === 'zh' ? 'zh' : 'en';
+  const language = resolveGuideLanguage(lang);
   const copy = recipe[language];
   const descriptionPrompt = recipe.start?.[language]?.descriptionPrompt;
   if (!descriptionPrompt) {
@@ -277,9 +387,7 @@ export function startPromptsFor(recipe, lang = 'en') {
   }
   const repositoryPrompt = recipe.type === 'architecture'
     ? copy.prompt
-    : language === 'zh'
-      ? `先检查这个仓库里的相关证据，然后${copy.prompt}不要编造代码无法支持的行为。`
-      : `Inspect this repository for evidence, then ${copy.prompt.charAt(0).toLowerCase()}${copy.prompt.slice(1)} Do not invent behavior that the code does not support.`;
+    : REPOSITORY_PROMPT_WRAPPERS[language](copy.prompt);
   return { descriptionPrompt, repositoryPrompt };
 }
 
@@ -288,7 +396,7 @@ function normalized(value) {
 }
 
 function localized(recipe, lang) {
-  const copy = recipe[lang === 'zh' ? 'zh' : 'en'];
+  const copy = recipe[resolveGuideLanguage(lang)];
   return {
     id: recipe.id,
     type: recipe.type,
@@ -321,7 +429,7 @@ function scoreRecipe(recipe, query) {
 }
 
 export function recommendScenario(query, options = {}) {
-  const lang = options.lang === 'zh' || options.lang === 'en' ? options.lang : detectGuideLanguage(query);
+  const lang = GUIDE_LANGS.includes(options.lang) ? options.lang : detectGuideLanguage(query);
   const ranked = SCENARIO_RECIPES.map((recipe) => scoreRecipe(recipe, query))
     .sort((left, right) => right.score - left.score || SCENARIO_RECIPES.indexOf(left.recipe) - SCENARIO_RECIPES.indexOf(right.recipe));
   const winner = ranked[0].score > 0 ? ranked[0] : { recipe: SCENARIO_RECIPES[0], score: 0, matched: [] };
@@ -340,28 +448,46 @@ export function recommendScenario(query, options = {}) {
   };
 }
 
+const SCENARIO_LIST_COPY = {
+  en: {
+    heading: (count) => `Archify scenario recipes (${count})`,
+    intro: 'Choose the question before the diagram type. Run: archify guide "your scenario"',
+  },
+  zh: {
+    heading: (count) => `Archify 场景配方（${count}）`,
+    intro: '先选择你要回答的问题，再选择图表类型。可运行：archify guide "你的场景"',
+  },
+  ja: {
+    heading: (count) => `Archify の場面別の台本（${count} 件）`,
+    intro: '図の種類より先に、答えたい問いを選んでください。実行: archify guide "あなたの場面"',
+  },
+};
+
 export function formatScenarioList(lang = 'en') {
-  const isZh = lang === 'zh';
-  const heading = isZh
-    ? `Archify 场景配方（${SCENARIO_RECIPES.length}）`
-    : `Archify scenario recipes (${SCENARIO_RECIPES.length})`;
-  const intro = isZh
-    ? '先选择你要回答的问题，再选择图表类型。可运行：archify guide "你的场景"'
-    : 'Choose the question before the diagram type. Run: archify guide "your scenario"';
+  const copy = SCENARIO_LIST_COPY[resolveGuideLanguage(lang)];
+  const heading = copy.heading(SCENARIO_RECIPES.length);
+  const intro = copy.intro;
   return [heading, '', intro, '', ...listScenarioRecipes(lang).flatMap((recipe) => [
     `${recipe.id}  [${recipe.type}]  ${recipe.title}`,
     `  ${recipe.question}`,
   ])].join('\n');
 }
 
+const RECOMMENDATION_LABELS = {
+  en: {
+    heading: 'Recommendation', question: 'Question answered', use: 'Use when', avoid: 'Avoid when', include: 'Must include', presentation: 'Presentation', prompt: 'Copy-ready prompt', alternatives: 'Other possible fits', confidence: 'Confidence', separator: '; ',
+  },
+  zh: {
+    heading: '推荐', question: '要回答的问题', use: '适合', avoid: '不要这样用', include: '必须包含', presentation: '表现建议', prompt: '可直接复制的提示词', alternatives: '其他可能', confidence: '置信度', separator: '、',
+  },
+  ja: {
+    heading: 'おすすめ', question: '答えたい問い', use: '向いている場面', avoid: '向いていない場面', include: '必ず入れるもの', presentation: '見せ方', prompt: 'そのまま使える指示文', alternatives: 'ほかの候補', confidence: '確からしさ', separator: '、',
+  },
+};
+
 export function formatScenarioRecommendation(result) {
-  const isZh = result.lang === 'zh';
   const recipe = result.recommendation;
-  const labels = isZh ? {
-    heading: '推荐', question: '要回答的问题', use: '适合', avoid: '不要这样用', include: '必须包含', presentation: '表现建议', prompt: '可直接复制的提示词', alternatives: '其他可能', confidence: '置信度',
-  } : {
-    heading: 'Recommendation', question: 'Question answered', use: 'Use when', avoid: 'Avoid when', include: 'Must include', presentation: 'Presentation', prompt: 'Copy-ready prompt', alternatives: 'Other possible fits', confidence: 'Confidence',
-  };
+  const labels = RECOMMENDATION_LABELS[resolveGuideLanguage(result.lang)];
   const lines = [
     `${labels.heading}: ${recipe.title}  [${recipe.type}]`,
     `${labels.confidence}: ${result.confidence}`,
@@ -369,7 +495,7 @@ export function formatScenarioRecommendation(result) {
     '',
     `${labels.use}: ${recipe.useWhen}`,
     `${labels.avoid}: ${recipe.avoidWhen}`,
-    `${labels.include}: ${recipe.include.join(isZh ? '、' : '; ')}`,
+    `${labels.include}: ${recipe.include.join(labels.separator)}`,
     `${labels.presentation}: ${recipe.presentation.preset} · ${recipe.presentation.motion} · views ${recipe.presentation.views}`,
     '',
     `${labels.prompt}:`,
@@ -386,6 +512,7 @@ export function publicGuideData() {
     ...localized(recipe, 'en'),
     en: recipe.en,
     zh: recipe.zh,
+    ja: recipe.ja,
     signals: recipe.signals.map(([signal, weight]) => [signal, weight]),
   }));
 }

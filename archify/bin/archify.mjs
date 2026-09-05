@@ -23,7 +23,7 @@ function usage() {
   archify inspect <type> <input.json>
   archify check <output.html>
   archify visual-check <output.html> [--json]
-  archify guide [scenario or question] [--json] [--lang en|zh]
+  archify guide [scenario or question] [--json] [--lang en|zh|ja]
   archify brands [name, alias, domain, or category] [--json]
   archify brands capture <url> [--json]
   archify examples
@@ -617,6 +617,9 @@ async function commandCompare(args) {
       baseHtml: baseResult.html,
       headHtml: headResult.html,
       artifactCss: extractArtifactCss(headResult.html),
+      // The Delta shell follows the head snapshot's authored locale, so the
+      // review chrome matches the diagrams it frames.
+      locale: head?.meta?.locale,
     });
     const deltaValidation = validateArchitectureDeltaHtml(html, artifactIr);
     fs.writeFileSync(htmlCandidate, html);
@@ -1366,12 +1369,12 @@ async function commandGuide(args) {
       json = true;
     } else if (arg === '--lang') {
       const value = args[index + 1];
-      if (value !== 'en' && value !== 'zh') fail('--lang must be "en" or "zh".');
+      if (value !== 'en' && value !== 'zh' && value !== 'ja') fail('--lang must be "en", "zh", or "ja".');
       lang = value;
       index += 1;
     } else if (arg.startsWith('--lang=')) {
       const value = arg.slice('--lang='.length);
-      if (value !== 'en' && value !== 'zh') fail('--lang must be "en" or "zh".');
+      if (value !== 'en' && value !== 'zh' && value !== 'ja') fail('--lang must be "en", "zh", or "ja".');
       lang = value;
     } else if (arg.startsWith('--')) {
       fail(`Unknown guide option "${arg}".`);

@@ -301,7 +301,8 @@ test('compare CLI writes a deterministic three-state artifact and complete sidec
   assert.match(firstHtml, /structural-frame.*data-delta-state="changed".*stroke-dasharray:2 3!important/);
   assert.match(firstHtml, /data-delta-boundary-state="added".*fill:#34d399!important/);
   assert.match(firstHtml, /delta-boundary-marker\[data-delta-state\]\{color:var\(--delta\)\}/);
-  assert.match(firstHtml, /No authored architecture changes ·.*movementSummary/);
+  assert.match(firstHtml, /"delta\.card\.noChanges":\s*"No authored architecture changes · \{movement\}"/);
+  assert.match(firstHtml, /t\('delta\.card\.noChanges', \{ movement: movementSummary \}\)/);
   assert.match(firstHtml, /font-family:"JetBrains Mono",ui-monospace/);
   assert.doesNotMatch(firstHtml, /font-family:Inter|body\{min-width:1080px/);
   assert.match(firstHtml, /@media\(max-width:760px\)/);

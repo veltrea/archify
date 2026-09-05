@@ -6,6 +6,12 @@ All notable changes are documented here. Format loosely follows [Keep a Changelo
 
 > Development identity: `v2.17.0-dev.1`. Not a stable release.
 
+### Added (veltrea/archify fork)
+- **Japanese locale (`meta.locale: "ja"`).** All five renderers and the Architecture Delta shell accept `ja`, localizing renderer-owned chrome, default legends, document titles, accessibility copy, and `<html>`/`<svg>` `lang`. Authored content is never translated, matching the existing `en` and `zh-CN` contract.
+- **Language-aware CJK font fallback.** Japanese and Simplified Chinese share Han characters but not their glyph shapes. The bundled template, the serialized SVG used for image export, and the Delta share-card canvas now order their CJK fallback by document language: Japanese faces first for `ja` (and every non-Chinese document), Simplified-Chinese faces first for `zh-CN`. Before this change, Japanese kanji rendered with Simplified-Chinese shapes because the stack contained no Japanese face at all.
+- **Japanese scenario guide.** `archify guide --lang ja` and Japanese queries return Japanese recipe copy and prompts. Language detection now tests kana before Han ideographs, because Han alone cannot distinguish Japanese from Chinese.
+- **Localized Architecture Delta shell.** The compare view follows the head snapshot's `meta.locale` for its chrome, review strip, and share card; its structural validation now keys on stable `data-*` markers instead of English text.
+
 ### Fixed
 - **License provenance in distributions.** Source and packaged Skill distributions retain Cocoon AI's exact MIT copyright notice, package staging and smoke tests fail closed when the notice or LICENSE is missing or altered, and the deterministic ZIP carries the same LICENSE bytes as the repository.
 - **Third-party mark notices in distributions.** Source and packaged Skill distributions now identify the pinned Simple Icons collection, disclose all individual icon licenses recorded by that version, preserve source and brand-guideline links, and state that Archify's MIT license does not replace third-party copyright or trademark terms. Package staging and smoke tests fail closed when the notice is missing or altered.

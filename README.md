@@ -1,5 +1,5 @@
 <p align="center">
-  <strong>English</strong> · <a href="./README_ZH.md">简体中文</a>
+  <strong>English</strong> · <a href="./README_ZH.md">简体中文</a> · <a href="./README_JA.md">日本語</a>
 </p>
 
 <p align="center">
@@ -231,7 +231,7 @@ Settings:
 }
 ```
 
-`meta.locale=en|zh-CN` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`—never authored content. Otherwise omit; preserve requested-language copy; disclose English fallback. Static omits `animation`; `classic` defaults.
+`meta.locale=en|zh-CN|ja` localizes page title, Legend, states/errors, a11y, HTML/SVG `lang`, and CJK font order—never authored content. Otherwise omit; preserve requested-language copy; disclose English fallback. Static omits `animation`; `classic` defaults.
 
 ## Explore and share the output
 

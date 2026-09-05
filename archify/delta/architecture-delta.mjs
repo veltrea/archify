@@ -1,5 +1,39 @@
+import { resolveLocale, translateMessage } from '../renderers/shared/i18n.mjs';
+
 const COMPARATOR_VERSION = 1;
 const CANONICAL_VERSION = 1;
+
+// The Delta shell is renderer-owned chrome, so it follows meta.locale exactly
+// like the Viewer does. Authored titles, labels and IDs are never translated.
+const DELTA_RUNTIME_KEYS = [
+  'delta.review.play',
+  'delta.review.replay',
+  'delta.review.pause',
+  'delta.review.unavailable',
+  'delta.review.status',
+  'delta.card.badge',
+  'delta.card.title',
+  'delta.card.components',
+  'delta.card.connections',
+  'delta.card.boundaries',
+  'delta.card.movement',
+  'delta.card.presentation.changed',
+  'delta.card.presentation.unchanged',
+  'delta.card.noChanges',
+  'delta.card.revision',
+  'delta.card.foot',
+  'delta.card.fallbackTitle',
+  'delta.proof.authored',
+];
+
+function deltaRuntimeCatalog(locale) {
+  return Object.fromEntries(DELTA_RUNTIME_KEYS.map((key) => [key, translateMessage(locale, key)]));
+}
+
+// Canvas share cards draw outside CSS, so the CJK fallback is spelled out here
+// and ordered by locale for the same reason the page CSS orders it.
+const DELTA_CARD_CJK_JP = "'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans Mono CJK JP', 'Noto Sans JP', 'Yu Gothic', 'Meiryo'";
+const DELTA_CARD_CJK_SC = "'Noto Sans Mono CJK SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei'";
 
 export class ArchitectureDeltaError extends Error {
   constructor(code, message, details = {}) {
@@ -687,28 +721,30 @@ function expectedReviewTargetSignature(row) {
 
 const total = (summary, key) => summary.components[key] + summary.connections[key] + summary.boundaries[key];
 
-export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSvg, baseHtml = '', headHtml = '', artifactCss }) {
+export function renderArchitectureDeltaHtml({ receipt, baseSvg, deltaSvg, headSvg, baseHtml = '', headHtml = '', artifactCss, locale }) {
+  const lang = resolveLocale(locale);
+  const t = (key, values) => translateMessage(lang, key, values);
   const rows = architectureDeltaChangeRows(receipt);
   const changed = total(receipt.summary, 'changed');
-  const proof = receipt.proofLevel === 'revision-pinned' ? 'REVISION-PINNED INPUTS' : 'AUTHORED SNAPSHOTS';
+  const proof = receipt.proofLevel === 'revision-pinned' ? t('delta.proof.revisionPinned') : t('delta.proof.authored');
   const rowHtml = rows.length ? rows.map((row, index) => {
     const label = row.headLabel || row.baseLabel || row.head?.label || row.base?.label || row.label || row.id;
     const targetSignature = expectedReviewTargetSignature(row);
-    return `<li data-change-status="${esc(row.status)}"><button class="change-row" type="button" data-change-index="${index}" data-change-key="${esc(row.key)}" data-change-kind="${esc(row.kindKey)}" data-change-id="${esc(row.id)}" data-change-label="${esc(label)}" data-change-status="${esc(row.status)}" data-change-classifications="${esc(row.classifications.join(', '))}" data-change-target-signature="${esc(targetSignature)}"><span class="token">${esc(markerFor(row.status) || '~')}</span><span>${esc(row.kind)}</span><strong>${esc(label)}</strong><code>${esc(row.id)}</code><span>${esc(row.classifications.join(', '))}</span><span>${esc(row.changedFields.join(', ') || 'identity')}</span></button></li>`;
-  }).join('\n') : '<li class="empty">No authored architecture changes.</li>';
+    return `<li data-change-status="${esc(row.status)}"><button class="change-row" type="button" data-change-index="${index}" data-change-key="${esc(row.key)}" data-change-kind="${esc(row.kindKey)}" data-change-id="${esc(row.id)}" data-change-label="${esc(label)}" data-change-status="${esc(row.status)}" data-change-classifications="${esc(row.classifications.join(', '))}" data-change-target-signature="${esc(targetSignature)}"><span class="token">${esc(markerFor(row.status) || '~')}</span><span>${esc(t(`delta.kind.${row.kindKey}`))}</span><strong>${esc(label)}</strong><code>${esc(row.id)}</code><span>${esc(row.classifications.join(', '))}</span><span>${esc(row.changedFields.join(', ') || t('delta.changes.identity'))}</span></button></li>`;
+  }).join('\n') : `<li class="empty">${esc(t('delta.changes.empty'))}</li>`;
   const baseView = baseHtml
-    ? `<iframe class="snapshot-frame" title="Before architecture explorer" srcdoc="${esc(baseHtml)}"></iframe>`
+    ? `<iframe class="snapshot-frame" data-snapshot-frame="base" title="${esc(t('delta.snapshot.beforeFrame'))}" srcdoc="${esc(baseHtml)}"></iframe>`
     : baseSvg;
   const headView = headHtml
-    ? `<iframe class="snapshot-frame" title="After architecture explorer" srcdoc="${esc(headHtml)}"></iframe>`
+    ? `<iframe class="snapshot-frame" data-snapshot-frame="head" title="${esc(t('delta.snapshot.afterFrame'))}" srcdoc="${esc(headHtml)}"></iframe>`
     : headSvg;
   const html = `<!doctype html>
-<html lang="en" data-theme="dark" data-preset="${esc(receipt.view.visualPreset)}">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(receipt.head.title)} Architecture Delta</title>
+<html lang="${lang}" data-theme="dark" data-preset="${esc(receipt.view.visualPreset)}">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(t('delta.page.title', { title: receipt.head.title }))}</title>
 <style>
 ${artifactCss}
 :root{color-scheme:dark;--d-add:#34d399;--d-remove:#fb7185;--d-change:#fbbf24;--d-move:#7dd3fc;--d-focus:#7dd3fc;--d-ink:#e6edf5;--d-muted:#8aa0b5;--d-line:#25384a}
-*{box-sizing:border-box}body{margin:0;overflow-x:hidden;background:#071019;color:var(--d-ink);font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}.proof-page{width:min(1600px,calc(100vw - 64px));margin:auto;padding:30px 0 42px}.proof-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-bottom:20px;border-bottom:1px solid var(--d-line)}.eyebrow{margin:0 0 8px;color:#7dd3fc;font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em}.proof-head h1{margin:0;font-size:clamp(32px,4vw,56px);line-height:.96;letter-spacing:-.04em}.subtitle{margin:12px 0 0;color:var(--d-muted);font-size:14px}.metrics{display:flex;gap:9px}.metric{min-width:86px;padding:11px 13px;border:1px solid var(--d-line);border-radius:8px;background:#0b1722}.metric strong{display:block;font:700 23px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.metric span{display:block;margin-top:6px;color:var(--d-muted);font:700 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em}.add strong{color:var(--d-add)}.remove strong{color:var(--d-remove)}.change strong{color:var(--d-change)}
+*{box-sizing:border-box}body{margin:0;overflow-x:hidden;background:#071019;color:var(--d-ink);font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,var(--cjk-font),monospace}.proof-page{width:min(1600px,calc(100vw - 64px));margin:auto;padding:30px 0 42px}.proof-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-bottom:20px;border-bottom:1px solid var(--d-line)}.eyebrow{margin:0 0 8px;color:#7dd3fc;font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em}.proof-head h1{margin:0;font-size:clamp(32px,4vw,56px);line-height:.96;letter-spacing:-.04em}.subtitle{margin:12px 0 0;color:var(--d-muted);font-size:14px}.metrics{display:flex;gap:9px}.metric{min-width:86px;padding:11px 13px;border:1px solid var(--d-line);border-radius:8px;background:#0b1722}.metric strong{display:block;font:700 23px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.metric span{display:block;margin-top:6px;color:var(--d-muted);font:700 9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.1em}.add strong{color:var(--d-add)}.remove strong{color:var(--d-remove)}.change strong{color:var(--d-change)}
 .proof-tools{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:16px 0 10px}.view-switch{display:inline-flex;padding:3px;border:1px solid var(--d-line);border-radius:8px;background:#0a141e}.view-switch button,.utility,.review-step{border:0;border-radius:6px;background:transparent;color:var(--d-muted);padding:8px 14px;font:700 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;cursor:pointer}.view-switch button[aria-selected="true"]{background:#173047;color:#fff}.utility{border:1px solid var(--d-line)}.view-switch button:focus-visible,.utility:focus-visible,.review-step:focus-visible,.change-row:focus-visible{outline:2px solid var(--d-focus);outline-offset:2px}.utility:disabled,.review-step:disabled{cursor:not-allowed;opacity:.45}.legend{display:flex;gap:16px;color:var(--d-muted);font:650 10px/1 ui-monospace,SFMono-Regular,Menlo,monospace}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:22px;border-top:3px solid currentColor}.legend .add{color:var(--d-add)}.legend .remove{color:var(--d-remove)}.legend .remove i{border-top-style:dashed}.legend .change{color:var(--d-change)}.legend .change i{border-top-style:dotted}.legend .move{color:var(--d-move)}.legend .move i{border-top-style:double}
 .review-strip{display:grid;grid-template-columns:auto auto auto auto minmax(0,1fr);align-items:center;gap:5px;margin:0 0 10px;padding:7px 8px;border-block:1px solid var(--d-line);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.review-step{min-height:34px;border:1px solid var(--d-line);padding-inline:11px}.review-step[aria-pressed="true"]{border-color:var(--d-focus);color:var(--d-ink)}.review-status{min-width:0;padding-left:9px;color:var(--d-muted);font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.review-status strong{color:var(--d-ink);font-weight:750}.review-status[data-state="unavailable"]{color:var(--d-remove)}
 .canvas{overflow:hidden;border:1px solid var(--d-line);border-radius:10px;background:#09141e;padding:12px;min-height:520px}.canvas svg{display:block;width:100%;height:auto;max-height:72vh}.canvas[hidden]{display:none}.snapshot-frame{display:block;width:100%;height:min(76vh,920px);min-height:620px;border:0;border-radius:6px;background:#071019}.canvas[data-view="base"],.canvas[data-view="head"]{padding:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:.38}.canvas[data-delta-review-active]{--review-same-opacity:.14;--review-change-opacity:.28}.canvas[data-delta-review-active] [data-delta-state="same"]{opacity:var(--review-same-opacity)!important}.canvas[data-delta-review-active] [data-delta-state]:not([data-delta-state="same"]):not([data-delta-review-current]){opacity:var(--review-change-opacity)!important}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:opacity .16s ease-out}g[data-node-id][data-delta-state="added"]>rect:last-of-type{stroke:var(--d-add)!important;stroke-width:3!important}g[data-node-id][data-delta-state="removed"]>rect:last-of-type{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5}g[data-node-id][data-delta-state="changed"]>rect:last-of-type{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3}g[data-node-id][data-delta-state="moved"]>rect:last-of-type,g[data-node-id][data-delta-state="moved-from"]>rect:last-of-type{stroke:var(--d-move)!important;stroke-width:3!important;stroke-dasharray:8 3 2 3}g[data-node-id][data-delta-state="moved-from"],path[data-delta-state="moved-from"]{opacity:.42}path[data-delta-state="added"]{stroke:var(--d-add)!important;stroke-width:3!important}path[data-delta-state="removed"]{stroke:var(--d-remove)!important;stroke-width:3!important;stroke-dasharray:7 5!important}path[data-delta-state="changed"]{stroke:var(--d-change)!important;stroke-width:3!important;stroke-dasharray:2 3!important}path[data-delta-state="rerouted"],path[data-delta-state="moved-from"]{stroke:var(--d-move)!important;stroke-width:2.5!important;stroke-dasharray:8 3 2 3!important}.delta-node-marker circle{fill:#071019;stroke:currentColor;stroke-width:1.5}.delta-node-marker text,.delta-edge-marker,.delta-boundary-marker{fill:currentColor;font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace}[data-delta-state="added"] .delta-node-marker,.delta-edge-marker[data-delta-state="added"],.delta-boundary-marker[data-delta-state="added"]{color:var(--d-add)}[data-delta-state="removed"] .delta-node-marker,.delta-edge-marker[data-delta-state="removed"],.delta-boundary-marker[data-delta-state="removed"]{color:var(--d-remove)}[data-delta-state="changed"] .delta-node-marker,.delta-edge-marker[data-delta-state="changed"],.delta-boundary-marker[data-delta-state="changed"]{color:var(--d-change)}[data-delta-state="moved"] .delta-node-marker,[data-delta-state="moved-from"] .delta-node-marker,.delta-edge-marker[data-delta-state="moved-from"],.delta-edge-marker[data-delta-state="rerouted"],.delta-boundary-marker[data-delta-state="geometry-changed"]{color:var(--d-move)}.delta-edge-marker,.delta-boundary-marker{paint-order:stroke;stroke:#071019;stroke-width:3px}
@@ -718,12 +754,12 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
 @media(max-width:760px){.proof-page{width:100%;padding:12px}.proof-head{grid-template-columns:1fr;gap:14px;align-items:start}.proof-head h1{font-size:32px}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.metric{min-width:0}.proof-tools{align-items:stretch;flex-wrap:wrap;gap:8px}.view-switch{display:flex;flex:1 1 100%}.view-switch button{flex:1;padding-inline:8px}.legend{flex-wrap:wrap;gap:8px}.proof-tools>div:last-child{margin-left:auto}.review-strip{grid-template-columns:auto auto auto auto}.review-status{grid-column:1/-1;padding:4px 2px 0}.canvas{min-height:0;padding:6px;overflow:auto}.canvas svg{min-width:720px;max-height:none}.snapshot-frame{min-width:720px}.changes{overflow-x:auto}.change-row{min-width:820px}.proof-foot{flex-direction:column;gap:4px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.canvas[data-delta-review-active] [data-delta-review-current]{transition:none!important}}@media print{body{min-width:0;background:#fff;color:#111}.proof-page{width:100%;padding:0}.proof-tools,.review-strip,details{display:none!important}.canvas{display:none!important}.canvas[data-view="delta"]{display:block!important;border:0}.canvas[data-view="delta"] [data-delta-state="same"]{opacity:1!important;transition:none!important}.canvas[data-delta-review-active]{--review-same-opacity:1;--review-change-opacity:1}.canvas[data-delta-review-active] [data-delta-review-current]{opacity:1!important;transition:none!important}.proof-foot{color:#444}}
 </style></head>
-<body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">ARCHITECTURE DELTA · ${proof}</p><h1>See what changed<br>before you merge.</h1><p class="subtitle">${esc(receipt.base.title)} → ${esc(receipt.head.title)}</p></div><div class="metrics"><div class="metric add"><strong>${total(receipt.summary, 'added')}</strong><span>ADDED</span></div><div class="metric remove"><strong>${total(receipt.summary, 'removed')}</strong><span>REMOVED</span></div><div class="metric change"><strong>${changed}</strong><span>CHANGED</span></div></div></header>
-<div class="proof-tools"><div class="view-switch" role="tablist" aria-label="Architecture snapshot"><button role="tab" data-target="base" aria-selected="false">Before</button><button role="tab" data-target="delta" aria-selected="true">Delta</button><button role="tab" data-target="head" aria-selected="false">After</button></div><div class="legend"><span class="add"><i></i>+ ADD</span><span class="remove"><i></i>− DEL</span><span class="change"><i></i>~ MOD</span><span class="move"><i></i>↔ MOVE</span></div><div><button class="utility" id="export-svg" type="button">Export SVG</button> <button class="utility" id="share-card" type="button">Share Card</button> <button class="utility" id="preset" type="button">Preset</button> <button class="utility" id="theme" type="button">Theme</button></div></div>
-<nav class="review-strip" aria-label="Authored change review"><button class="review-step" id="review-overview" type="button" disabled>Overview</button><button class="review-step" id="review-previous" type="button" aria-label="Previous authored change" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false"${rows.length ? '' : ' disabled'}>Review</button><button class="review-step" id="review-next" type="button" aria-label="Next authored change" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">Overview · ${rows.length} authored changes</div></nav>
+<body><main class="proof-page"><header class="proof-head"><div><p class="eyebrow">${esc(t('delta.eyebrow', { proof }))}</p><h1>${esc(t('delta.headline.first'))}<br>${esc(t('delta.headline.second'))}</h1><p class="subtitle">${esc(receipt.base.title)} → ${esc(receipt.head.title)}</p></div><div class="metrics"><div class="metric add"><strong>${total(receipt.summary, 'added')}</strong><span>${esc(t('delta.metric.added'))}</span></div><div class="metric remove"><strong>${total(receipt.summary, 'removed')}</strong><span>${esc(t('delta.metric.removed'))}</span></div><div class="metric change"><strong>${changed}</strong><span>${esc(t('delta.metric.changed'))}</span></div></div></header>
+<div class="proof-tools"><div class="view-switch" role="tablist" aria-label="${esc(t('delta.snapshot.group'))}"><button role="tab" data-target="base" aria-selected="false">${esc(t('delta.snapshot.before'))}</button><button role="tab" data-target="delta" aria-selected="true">${esc(t('delta.snapshot.delta'))}</button><button role="tab" data-target="head" aria-selected="false">${esc(t('delta.snapshot.after'))}</button></div><div class="legend"><span class="add"><i></i>${esc(t('delta.legend.add'))}</span><span class="remove"><i></i>${esc(t('delta.legend.remove'))}</span><span class="change"><i></i>${esc(t('delta.legend.change'))}</span><span class="move"><i></i>${esc(t('delta.legend.move'))}</span></div><div><button class="utility" id="export-svg" type="button">${esc(t('delta.action.exportSvg'))}</button> <button class="utility" id="share-card" type="button">${esc(t('delta.action.shareCard'))}</button> <button class="utility" id="preset" type="button">${esc(t('delta.action.preset'))}</button> <button class="utility" id="theme" type="button">${esc(t('delta.action.theme'))}</button></div></div>
+<nav class="review-strip" data-review-nav="" aria-label="${esc(t('delta.review.region'))}"><button class="review-step" id="review-overview" type="button" disabled>${esc(t('delta.review.overview'))}</button><button class="review-step" id="review-previous" type="button" aria-label="${esc(t('delta.review.previous'))}" disabled>←</button><button class="review-step" id="review-play" type="button" aria-pressed="false"${rows.length ? '' : ' disabled'}>${esc(t('delta.review.play'))}</button><button class="review-step" id="review-next" type="button" aria-label="${esc(t('delta.review.next'))}" disabled>→</button><div class="review-status" id="review-status" role="status" aria-live="polite">${esc(t('delta.review.status', { count: rows.length }))}</div></nav>
 <section class="canvas" data-view="base" hidden>${baseView}</section><section class="canvas" data-view="delta">${deltaSvg}</section><section class="canvas" data-view="head" hidden>${headView}</section>
-<details${rows.length <= 10 ? ' open' : ''}><summary>Exact authored changes · ${rows.length}</summary><ul class="changes">${rowHtml}</ul></details>
-<footer class="proof-foot"><span>Stable IDs only · completeness: complete · ${proof}</span><span>Authored IR only · no risk or mergeability inference</span></footer></main>
+<details${rows.length <= 10 ? ' open' : ''}><summary>${esc(t('delta.changes.summary', { count: rows.length }))}</summary><ul class="changes">${rowHtml}</ul></details>
+<footer class="proof-foot"><span>${esc(t('delta.foot.left', { proof }))}</span><span>${esc(t('delta.foot.right'))}</span></footer></main>
 <script id="archify-compare-receipt" type="application/json">${safeJson(receipt)}</script>
 <script>(()=>{
   const REVIEW_DWELL_MS = 1400;
@@ -739,6 +775,14 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
   const receiptNode = document.querySelector('#archify-compare-receipt');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const exportCss = ${safeJson(artifactCss)};
+  const MESSAGES = ${safeJson(deltaRuntimeCatalog(lang))};
+  const CARD_CJK_FONT = ${safeJson(lang === 'zh-CN' ? DELTA_CARD_CJK_SC + ', ' + DELTA_CARD_CJK_JP : DELTA_CARD_CJK_JP + ', ' + DELTA_CARD_CJK_SC)};
+  const cardFont = (weight, size) => weight + ' ' + size + 'px ui-monospace, SFMono-Regular, Menlo, ' + CARD_CJK_FONT + ', monospace';
+  function t(key, values) {
+    return String(MESSAGES[key] || key).replace(/\{([a-zA-Z0-9_]+)\}/g, (match, name) => (
+      Object.prototype.hasOwnProperty.call(values || {}, name) ? String(values[name]) : match
+    ));
+  }
   let activeIndex = -1;
   let playbackToken = 0;
   let playbackTimer = 0;
@@ -757,7 +801,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     playbackTimer = 0;
     playing = false;
     playButton.setAttribute('aria-pressed', 'false');
-    playButton.textContent = activeIndex === rowButtons.length - 1 && rowButtons.length ? 'Replay' : 'Review';
+    playButton.textContent = activeIndex === rowButtons.length - 1 && rowButtons.length ? t('delta.review.replay') : t('delta.review.play');
     status.setAttribute('aria-live', 'polite');
   }
 
@@ -774,7 +818,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     });
     [overviewButton, previousButton, playButton, nextButton].forEach((button) => { button.disabled = true; });
     status.dataset.state = 'unavailable';
-    status.textContent = 'Review unavailable · compare identity mismatch';
+    status.textContent = t('delta.review.unavailable');
   }
 
   function receiptRows(receipt) {
@@ -896,7 +940,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     });
     show('delta');
     status.removeAttribute('data-state');
-    status.textContent = 'Overview · ' + rowButtons.length + ' authored changes';
+    status.textContent = t('delta.review.status', { count: rowButtons.length });
     updateControls();
   }
 
@@ -920,7 +964,7 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     if (reducedMotion.matches || rowButtons.length < 2) return;
     playing = true;
     const token = ++playbackToken;
-    playButton.textContent = 'Pause';
+    playButton.textContent = t('delta.review.pause');
     playButton.setAttribute('aria-pressed', 'true');
     status.setAttribute('aria-live', 'off');
     schedulePlayback(token);
@@ -1018,34 +1062,38 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     ctx.strokeStyle = '#25384a';
     ctx.lineWidth = 2;
     ctx.strokeRect(34, 28, 1132, 574);
-    ctx.font = '700 18px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = cardFont(700, 18);
     ctx.fillStyle = '#7dd3fc';
-    ctx.fillText('ARCHITECTURE DELTA', 66, 68);
-    ctx.font = '700 34px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.fillText(t('delta.card.badge'), 66, 68);
+    ctx.font = cardFont(700, 34);
     ctx.fillStyle = '#e6edf5';
-    const title = String(receipt.head.title || 'Architecture').slice(0, 46) + ' Architecture Delta';
+    const title = t('delta.card.title', { title: String(receipt.head.title || t('delta.card.fallbackTitle')).slice(0, 46) });
     ctx.fillText(title.slice(0, 58), 66, 112);
-    ctx.font = '700 17px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = cardFont(700, 17);
     ctx.fillStyle = '#8aa0b5';
-    const componentLine = 'COMPONENTS  +' + receipt.summary.components.added + '  ~' + receipt.summary.components.changed + '  −' + receipt.summary.components.removed;
-    const connectionLine = 'CONNECTIONS  +' + receipt.summary.connections.added + '  ~' + receipt.summary.connections.changed + '  −' + receipt.summary.connections.removed;
-    const boundaryLine = 'BOUNDARY SCOPE  +' + receipt.summary.boundaries.added + '  ~' + receipt.summary.boundaries.changed + '  −' + receipt.summary.boundaries.removed;
+    const componentLine = t('delta.card.components') + '  +' + receipt.summary.components.added + '  ~' + receipt.summary.components.changed + '  −' + receipt.summary.components.removed;
+    const connectionLine = t('delta.card.connections') + '  +' + receipt.summary.connections.added + '  ~' + receipt.summary.connections.changed + '  −' + receipt.summary.connections.removed;
+    const boundaryLine = t('delta.card.boundaries') + '  +' + receipt.summary.boundaries.added + '  ~' + receipt.summary.boundaries.changed + '  −' + receipt.summary.boundaries.removed;
     ctx.fillText(componentLine, 66, 151);
     ctx.fillText(connectionLine, 420, 151);
     ctx.fillText(boundaryLine, 786, 151);
-    ctx.font = '650 14px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = cardFont(650, 14);
     const authoredChanges = ['components', 'connections', 'boundaries'].reduce((sum, collection) => {
       const summary = receipt.summary[collection];
       return sum + summary.added + summary.changed + summary.removed;
     }, 0);
-    const movementSummary = '↔ moved ' + receipt.summary.components.moved + ' · rerouted ' + receipt.summary.connections.rerouted + ' · presentation ' + (receipt.summary.presentationChanged ? 'changed' : 'unchanged');
+    const movementSummary = t('delta.card.movement', {
+      moved: receipt.summary.components.moved,
+      rerouted: receipt.summary.connections.rerouted,
+      presentation: receipt.summary.presentationChanged ? t('delta.card.presentation.changed') : t('delta.card.presentation.unchanged'),
+    });
     const secondary = authoredChanges === 0
-      ? 'No authored architecture changes · ' + movementSummary
+      ? t('delta.card.noChanges', { movement: movementSummary })
       : movementSummary;
     ctx.fillText(secondary, 66, 181);
     const proofLine = receipt.proofLevel === 'revision-pinned'
-      ? 'REV ' + String(receipt.base.revision).slice(0, 8) + ' → ' + String(receipt.head.revision).slice(0, 8) + ' · REVISION-PINNED INPUTS'
-      : 'AUTHORED SNAPSHOTS';
+      ? t('delta.card.revision', { base: String(receipt.base.revision).slice(0, 8), head: String(receipt.head.revision).slice(0, 8) })
+      : t('delta.proof.authored');
     ctx.textAlign = 'right';
     ctx.fillText(proofLine, 1134, 181);
     ctx.textAlign = 'left';
@@ -1059,9 +1107,9 @@ html[data-theme="dark"] body{background:#071019!important;background-image:none!
     const width = image.width * ratio;
     const height = image.height * ratio;
     ctx.drawImage(image, 600 - width / 2, 385 - height / 2, width, height);
-    ctx.font = '650 12px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.font = cardFont(650, 12);
     ctx.fillStyle = '#8aa0b5';
-    ctx.fillText('Stable authored IDs · static complete Delta · no risk or mergeability inference', 66, 588);
+    ctx.fillText(t('delta.card.foot'), 66, 588);
     return pngBlob(canvas);
   }
 
@@ -1172,13 +1220,13 @@ export function validateArchitectureDeltaHtml(html, receipt) {
     }
   }
   if (!['base', 'delta', 'head'].every((id) => (html.match(new RegExp(`<section class="canvas" data-view="${id}"`, 'g')) || []).length === 1)) failures.push('expected one Before, Delta, and After canvas');
-  if ((html.match(/class="snapshot-frame" title="Before architecture explorer"/g) || []).length !== 1
-    || (html.match(/class="snapshot-frame" title="After architecture explorer"/g) || []).length !== 1) {
+  if ((html.match(/class="snapshot-frame" data-snapshot-frame="base"/g) || []).length !== 1
+    || (html.match(/class="snapshot-frame" data-snapshot-frame="head"/g) || []).length !== 1) {
     failures.push('Before and After must preserve one complete architecture explorer each');
   }
   if (!svgBalanced || svgDepth !== 0 || svgRoots !== 1 || deltaMarkup.slice(0, rootStart).trim() || deltaMarkup.slice(rootEnd).trim()) failures.push('expected exactly one root SVG in the Delta canvas');
   if ((html.match(/id="archify-compare-receipt"/g) || []).length !== 1) failures.push('expected exactly one embedded compare receipt');
-  if (!html.includes('aria-label="Authored change review"')) failures.push('missing exact-ID change navigator');
+  if (!html.includes('data-review-nav=""')) failures.push('missing exact-ID change navigator');
   if ((html.match(/class="change-row"/g) || []).length !== rows.length) failures.push('change navigator row count does not match the receipt');
   if (!html.includes('id="export-svg"') || !html.includes('id="share-card"')
     || !html.includes('window.Archify.deltaExport = { canonicalSvg: canonicalDeltaSvg, shareCard')) {
